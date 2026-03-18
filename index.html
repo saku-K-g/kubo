@@ -85,7 +85,8 @@ function draw() {
 
   for (let y = 0; y < maze.length; y++) {
     for (let x = 0; x < maze[y].length; x++) {
-      ctx.fillStyle = maze[y][x] ? "#222" : "#000";
+      // 見やすい配色に変更
+      ctx.fillStyle = maze[y][x] ? "#1e3a8a" : "#e0f2fe";
       ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
     }
   }
