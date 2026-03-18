@@ -86,7 +86,15 @@ function draw() {
   for (let y = 0; y < maze.length; y++) {
     for (let x = 0; x < maze[y].length; x++) {
       // 見やすい配色に変更
-      ctx.fillStyle = maze[y][x] ? "#1e3a8a" : "#e0f2fe";
+      // ネオン風配色
+      if (maze[y][x]) {
+        ctx.fillStyle = "#6a00ff";
+        ctx.shadowColor = "#9d4dff";
+        ctx.shadowBlur = 8;
+      } else {
+        ctx.fillStyle = "#000";
+        ctx.shadowBlur = 0;
+      }
       ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
     }
   }
