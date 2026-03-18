@@ -30,7 +30,8 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const maze = Array.from({length: 31}, () => Array(31).fill(1));
+const SIZE = 61; // 迷路を大きくして複雑に
+const maze = Array.from({length: SIZE}, () => Array(SIZE).fill(1));
 
 // 迷路生成（DFS）
 function generateMaze(x, y) {
@@ -38,7 +39,7 @@ function generateMaze(x, y) {
   for (let [dx, dy] of dirs) {
     const nx = x + dx;
     const ny = y + dy;
-    if (ny > 0 && ny < 30 && nx > 0 && nx < 30 && maze[ny][nx] === 1) {
+    if (ny > 0 && ny < SIZE-1 && nx > 0 && nx < SIZE-1 && maze[ny][nx] === 1) {
       maze[ny][nx] = 0;
       maze[y + dy/2][x + dx/2] = 0;
       generateMaze(nx, ny);
@@ -46,7 +47,7 @@ function generateMaze(x, y) {
   }
 }
 
-maze[1][1] = 0;
+maze[1][1] = 0; // スタート
 generateMaze(1,1);
 
 // ゴールを一番遠い位置に設定
@@ -78,7 +79,7 @@ let goal = findFarthestPoint();
 maze[goal.y][goal.x] = 0;
 
 function draw() {
-  const tileSize = Math.floor(Math.min(canvas.width, canvas.height) / maze.length);
+  const tileSize = Math.floor(Math.min(canvas.width, canvas.height) / SIZE);
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
