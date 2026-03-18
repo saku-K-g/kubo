@@ -3,121 +3,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高精細ピクセル迷路ゲーム</title>
+<title>高難易度ピクセル迷路</title>
 <style>
   body {
-    background: #0d0d0d;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     margin: 0;
-    color: white;
-    font-family: monospace;
+    background: #000;
+    overflow: hidden;
   }
   canvas {
+    display: block;
     image-rendering: pixelated;
-    border: 4px solid #888;
-    background: #000;
   }
 </style>
 </head>
 <body>
-<canvas id="game" width="480" height="480"></canvas>
+<canvas id="game"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const tileSize = 16; // 細かく
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
 
-// 一本道に近い迷路（ほぼ1ルート）
-const maze = [
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-[1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-[1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
-[1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
+const maze = Array.from({length: 31}, () => Array(31).fill(1));
 
-let player = { x: 1, y: 1 };
-let goal = { x: 28, y: 19 };
-
-// 簡単なドットキャラ描画
-function drawPlayer(px, py) {
-  const x = px * tileSize;
-  const y = py * tileSize;
-  ctx.fillStyle = "#00ff88";
-  ctx.fillRect(x+4, y+4, 8, 8);
-  ctx.fillStyle = "#003322";
-  ctx.fillRect(x+6, y+6, 2, 2);
-  ctx.fillRect(x+10, y+6, 2, 2);
+// DFSで迷路生成（複雑＆正解ルート1つ）
+function generateMaze(x, y) {
+  const dirs = [[2,0],[-2,0],[0,2],[0,-2]].sort(() => Math.random() - 0.5);
+  for (let [dx, dy] of dirs) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (ny > 0 && ny < 30 && nx > 0 && nx < 30 && maze[ny][nx] === 1) {
+      maze[ny][nx] = 0;
+      maze[y + dy/2][x + dx/2] = 0;
+      generateMaze(nx, ny);
+    }
+  }
 }
 
+maze[1][1] = 0;
+generateMaze(1,1);
+
+let player = {x:1,y:1};
+let goal = {x:29,y:29};
+maze[goal.y][goal.x] = 0;
+
 function draw() {
+  const tileSize = Math.floor(Math.min(canvas.width, canvas.height) / maze.length);
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   for (let y = 0; y < maze.length; y++) {
     for (let x = 0; x < maze[y].length; x++) {
-      if (maze[y][x] === 1) {
-        ctx.fillStyle = "#2a2a2a";
-      } else {
-        ctx.fillStyle = "#000";
-      }
+      ctx.fillStyle = maze[y][x] ? "#222" : "#000";
       ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
     }
   }
 
-  // ゴール（ちょいドット風）
-  ctx.fillStyle = "#ffff00";
-  ctx.fillRect(goal.x * tileSize + 4, goal.y * tileSize + 4, 8, 8);
+  // ゴール
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(goal.x * tileSize, goal.y * tileSize, tileSize, tileSize);
 
-  drawPlayer(player.x, player.y);
+  // プレイヤー
+  ctx.fillStyle = "lime";
+  ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
 }
 
 function move(dx, dy) {
   const nx = player.x + dx;
   const ny = player.y + dy;
-
-  if (maze[ny][nx] === 0) {
+  if (maze[ny] && maze[ny][nx] === 0) {
     player.x = nx;
     player.y = ny;
   }
-
   if (player.x === goal.x && player.y === goal.y) {
-    setTimeout(() => alert("クリア！"), 100);
+    setTimeout(()=>alert("クリア！"),100);
   }
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowUp") move(0, -1);
-  if (e.key === "ArrowDown") move(0, 1);
-  if (e.key === "ArrowLeft") move(-1, 0);
-  if (e.key === "ArrowRight") move(1, 0);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp") move(0,-1);
+  if (e.key === "ArrowDown") move(0,1);
+  if (e.key === "ArrowLeft") move(-1,0);
+  if (e.key === "ArrowRight") move(1,0);
 });
 
-function gameLoop() {
+function loop(){
   draw();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
-
-gameLoop();
+loop();
 </script>
 </body>
 </html>
