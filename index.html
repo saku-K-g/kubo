@@ -50,8 +50,32 @@ maze[1][1] = 0;
 generateMaze(1,1);
 
 let player = {x:1,y:1};
-let goal = {x:29,y:29};
-maze[goal.y][goal.x] = 0;
+// ゴールを「必ず到達可能な位置」にする
+function findFarthestPoint() {
+  const visited = Array.from({length: maze.length}, () => Array(maze[0].length).fill(false));
+  const queue = [{x:1,y:1,dist:0}];
+  visited[1][1] = true;
+  let farthest = {x:1,y:1,dist:0};
+
+  while(queue.length) {
+    const {x,y,dist} = queue.shift();
+    if (dist > farthest.dist) farthest = {x,y,dist};
+
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let [dx,dy] of dirs) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (maze[ny] && maze[ny][nx] === 0 && !visited[ny][nx]) {
+        visited[ny][nx] = true;
+        queue.push({x:nx,y:ny,dist:dist+1});
+      }
+    }
+  }
+  return farthest;
+}
+
+let player = {x:1,y:1};
+let goal = findFarthestPoint();
 
 function draw() {
   const tileSize = Math.floor(Math.min(canvas.width, canvas.height) / maze.length);
