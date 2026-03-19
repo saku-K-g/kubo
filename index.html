@@ -16,7 +16,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 画面サイズ調整
+// 画面サイズ
 function resize(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -24,11 +24,10 @@ function resize(){
 window.addEventListener("resize", resize);
 resize();
 
-// ===== 迷路設定 =====
+// ===== 迷路 =====
 const SIZE = 31;
 const maze = Array.from({length: SIZE}, () => Array(SIZE).fill(1));
 
-// 迷路生成（一本道）
 function generateMaze(x,y){
   const dirs = [[2,0],[-2,0],[0,2],[0,-2]].sort(()=>Math.random()-0.5);
   for (let [dx,dy] of dirs){
@@ -61,10 +60,10 @@ function addBranches(rate=0.15){
 }
 addBranches();
 
-// ===== プレイヤー =====
+// プレイヤー
 let player = {x:1,y:1};
 
-// ===== ゴール（遠い場所）=====
+// ゴール
 function findFarthest(){
   const visited = Array.from({length: SIZE},()=>Array(SIZE).fill(false));
   const q=[{x:1,y:1,d:0}];
@@ -84,7 +83,6 @@ function findFarthest(){
   }
   return far;
 }
-
 let goal = findFarthest();
 
 // ===== 描画 =====
@@ -92,19 +90,32 @@ function draw(){
   const tile = Math.floor(Math.min(canvas.width,canvas.height)/SIZE);
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // 迷路
+  // 迷路描画（ネオン）
   for (let y=0;y<SIZE;y++){
     for (let x=0;x<SIZE;x++){
-      ctx.fillStyle = maze[y][x] ? "#6a00ff" : "#000";
+
+      if (maze[y][x]) {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#00ffff";
+        ctx.fillStyle = "#00ffff";
+      } else {
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#111";
+      }
+
       ctx.fillRect(x*tile,y*tile,tile,tile);
     }
   }
 
   // ゴール
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = "yellow";
   ctx.fillStyle="yellow";
   ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
 
   // プレイヤー
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = "#00ffcc";
   ctx.fillStyle="#00ffcc";
   ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
 
@@ -113,11 +124,9 @@ function draw(){
 
   ctx.save();
 
-  // 暗くする
   ctx.fillStyle = "rgba(0,0,0,0.9)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // くり抜き
   ctx.globalCompositeOperation = "destination-out";
 
   // プレイヤー
