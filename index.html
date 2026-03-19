@@ -89,14 +89,47 @@ function draw(){
   const tile = Math.floor(Math.min(canvas.width,canvas.height)/SIZE);
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // ===== 迷路 =====
+  const radius = tile * 3;
+
+  // ===== まず全体を暗く =====
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // ===== 見える範囲をクリップ =====
+  ctx.save();
+  ctx.beginPath();
+
+  // プレイヤー
+  ctx.arc(player.x*tile + tile/2, player.y*tile + tile/2, radius, 0, Math.PI*2);
+
+  // ゴール
+  ctx.moveTo(goal.x*tile + tile/2 + radius, goal.y*tile + tile/2);
+  ctx.arc(goal.x*tile + tile/2, goal.y*tile + tile/2, radius, 0, Math.PI*2);
+
+  ctx.clip();
+
+  // ===== クリップ内だけ迷路を描画 =====
   for (let y=0;y<SIZE;y++){
     for (let x=0;x<SIZE;x++){
       if (maze[y][x]){
         ctx.fillStyle="#6a00ff";
-        ctx.shadowColor="#9d4dff";
-        ctx.shadowBlur=8;
       } else {
+        ctx.fillStyle="#000";
+      }
+      ctx.fillRect(x*tile,y*tile,tile,tile);
+    }
+  }
+
+  // ゴール
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
+
+  // プレイヤー
+  ctx.fillStyle="#00ffcc";
+  ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
+
+  ctx.restore();
+} else {
         ctx.fillStyle="#000";
         ctx.shadowBlur=0;
       }
