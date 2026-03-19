@@ -114,6 +114,49 @@ function draw(){
   ctx.fillStyle="#00ffcc";
   ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
 
+  // ===== 視界制限（シンプル＆確実版） =====
+  const radius = tile * 3;
+
+  ctx.save();
+
+  // まず暗くする
+  ctx.shadowBlur = 0;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(0,0,0,0.9)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // くり抜く
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+
+  // プレイヤー
+  ctx.arc(player.x*tile + tile/2, player.y*tile + tile/2, radius, 0, Math.PI*2);
+
+  // ゴール
+  ctx.moveTo(goal.x*tile + tile/2 + radius, goal.y*tile + tile/2);
+  ctx.arc(goal.x*tile + tile/2, goal.y*tile + tile/2, radius, 0, Math.PI*2);
+
+  ctx.fill();
+
+  ctx.restore();
+} else {
+        ctx.fillStyle="#000";
+        ctx.shadowBlur=0;
+      }
+      ctx.fillRect(x*tile,y*tile,tile,tile);
+    }
+  }
+
+  // ゴール
+  ctx.shadowBlur=12;
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
+
+  // プレイヤー
+  ctx.shadowBlur=12;
+  ctx.fillStyle="#00ffcc";
+  ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
+
   // ===== 視界制限（安定版） =====
   const radius = tile * 3;
 
