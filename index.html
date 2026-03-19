@@ -1,45 +1,16 @@
-function draw(){
-  const tile = Math.floor(Math.min(canvas.width,canvas.height)/SIZE);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>テスト</title>
+</head>
+<body>
 
-  // ===== 迷路 =====
-  for (let y=0;y<SIZE;y++){
-    for (let x=0;x<SIZE;x++){
-      ctx.fillStyle = maze[y][x] ? "#6a00ff" : "#000";
-      ctx.fillRect(x*tile,y*tile,tile,tile);
-    }
-  }
+<canvas id="game"></canvas>
 
-  // ゴール
-  ctx.shadowBlur=12;
-  ctx.fillStyle="yellow";
-  ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
+<script>
+console.log("ちゃんと動いてるよ");
+</script>
 
-  // プレイヤー
-  ctx.fillStyle="#00ffcc";
-  ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
-
-  // ===== 視界制限 =====
-  const radius = tile * 3;
-
-  ctx.save();
-
-  // 暗くする
-  ctx.fillStyle = "rgba(0,0,0,0.9)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  // くり抜き
-  ctx.globalCompositeOperation = "destination-out";
-
-  // プレイヤー
-  ctx.beginPath();
-  ctx.arc(player.x*tile + tile/2, player.y*tile + tile/2, radius, 0, Math.PI*2);
-  ctx.fill();
-
-  // ゴール
-  ctx.beginPath();
-  ctx.arc(goal.x*tile + tile/2, goal.y*tile + tile/2, radius, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.restore();
-}
+</body>
+</html>
