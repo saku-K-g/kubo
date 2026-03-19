@@ -3,132 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高難易度ピクセル迷路</title>
+<title>ネオン迷路（改良版）</title>
 <style>
-  body {
-    margin: 0;
-    background: #000;
-    overflow: hidden;
-  }
-  canvas {
-    display: block;
-    image-rendering: pixelated;
-  }
+  body { margin:0; background:#000; overflow:hidden; }
+  canvas { display:block; image-rendering:pixelated; }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-function resize() {
+function resize(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
 window.addEventListener("resize", resize);
 resize();
 
-const SIZE = 61; // 迷路を大きくして複雑に
+// 少し小さくして遊びやすく
+const SIZE = 41;
 const maze = Array.from({length: SIZE}, () => Array(SIZE).fill(1));
 
-// 迷路生成（DFS）
-function generateMaze(x, y) {
-  const dirs = [[2,0],[-2,0],[0,2],[0,-2]].sort(() => Math.random() - 0.5);
-  for (let [dx, dy] of dirs) {
-    const nx = x + dx;
-    const ny = y + dy;
-    if (ny > 0 && ny < SIZE-1 && nx > 0 && nx < SIZE-1 && maze[ny][nx] === 1) {
-      maze[ny][nx] = 0;
-      maze[y + dy/2][x + dx/2] = 0;
-      generateMaze(nx, ny);
+// 基本迷路（一本道）
+function generateMaze(x,y){
+  const dirs = [[2,0],[-2,0],[0,2],[0,-2]].sort(()=>Math.random()-0.5);
+  for (let [dx,dy] of dirs){
+    const nx = x+dx, ny = y+dy;
+    if (ny>0 && ny<SIZE-1 && nx>0 && nx<SIZE-1 && maze[ny][nx]===1){
+      maze[ny][nx]=0;
+      maze[y+dy/2][x+dx/2]=0;
+      generateMaze(nx,ny);
     }
   }
 }
 
-maze[1][1] = 0; // スタート
+maze[1][1]=0;
 generateMaze(1,1);
 
-// ゴールを一番遠い位置に設定
-function findFarthestPoint() {
-  const visited = Array.from({length: maze.length}, () => Array(maze[0].length).fill(false));
-  const queue = [{x:1,y:1,dist:0}];
-  visited[1][1] = true;
-  let farthest = {x:1,y:1,dist:0};
-
-  while(queue.length) {
-    const {x,y,dist} = queue.shift();
-    if (dist > farthest.dist) farthest = {x,y,dist};
-
-    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-    for (let [dx,dy] of dirs) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (maze[ny] && maze[ny][nx] === 0 && !visited[ny][nx]) {
-        visited[ny][nx] = true;
-        queue.push({x:nx,y:ny,dist:dist+1});
+// 分かれ道を追加（ここが今回の神ポイント）
+function addBranches(rate=0.1){
+  for (let y=1;y<SIZE-1;y++){
+    for (let x=1;x<SIZE-1;x++){
+      if (maze[y][x]===1 && Math.random()<rate){
+        // 周囲に道が2つ以上あれば壁を壊す
+        let count=0;
+        if (maze[y+1][x]===0) count++;
+        if (maze[y-1][x]===0) count++;
+        if (maze[y][x+1]===0) count++;
+        if (maze[y][x-1]===0) count++;
+        if (count>=2) maze[y][x]=0;
       }
     }
   }
-  return farthest;
 }
 
-let player = {x:1,y:1};
-let goal = findFarthestPoint();
-maze[goal.y][goal.x] = 0;
+addBranches(0.15); // 分岐量調整できる
 
-function draw() {
-  const tileSize = Math.floor(Math.min(canvas.width, canvas.height) / SIZE);
+// 一番遠い場所をゴールに
+function findFarthest(){
+  const visited = Array.from({length: SIZE},()=>Array(SIZE).fill(false));
+  const q=[{x:1,y:1,d:0}];
+  visited[1][1]=true;
+  let far={x:1,y:1,d:0};
 
+  while(q.length){
+    const {x,y,d}=q.shift();
+    if (d>far.d) far={x,y,d};
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+      const nx=x+dx, ny=y+dy;
+      if (maze[ny] && maze[ny][nx]===0 && !visited[ny][nx]){
+        visited[ny][nx]=true;
+        q.push({x:nx,y:ny,d:d+1});
+      }
+    });
+  }
+  return far;
+}
+
+let player={x:1,y:1};
+let goal=findFarthest();
+
+function draw(){
+  const tile = Math.floor(Math.min(canvas.width,canvas.height)/SIZE);
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  for (let y = 0; y < maze.length; y++) {
-    for (let x = 0; x < maze[y].length; x++) {
-      // 見やすい配色に変更
-      // ネオン風配色
-      if (maze[y][x]) {
-        ctx.fillStyle = "#6a00ff";
-        ctx.shadowColor = "#9d4dff";
-        ctx.shadowBlur = 8;
+  for (let y=0;y<SIZE;y++){
+    for (let x=0;x<SIZE;x++){
+      if (maze[y][x]){
+        ctx.fillStyle="#6a00ff";
+        ctx.shadowColor="#9d4dff";
+        ctx.shadowBlur=8;
       } else {
-        ctx.fillStyle = "#000";
-        ctx.shadowBlur = 0;
+        ctx.fillStyle="#000";
+        ctx.shadowBlur=0;
       }
-      ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      ctx.fillRect(x*tile,y*tile,tile,tile);
     }
   }
 
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(goal.x * tileSize, goal.y * tileSize, tileSize, tileSize);
+  ctx.shadowBlur=12;
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
 
-  ctx.fillStyle = "lime";
-  ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
+  ctx.shadowBlur=12;
+  ctx.fillStyle="#00ffcc";
+  ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
 }
 
-function move(dx, dy) {
-  const nx = player.x + dx;
-  const ny = player.y + dy;
-  if (maze[ny] && maze[ny][nx] === 0) {
-    player.x = nx;
-    player.y = ny;
+function move(dx,dy){
+  const nx=player.x+dx, ny=player.y+dy;
+  if (maze[ny] && maze[ny][nx]===0){
+    player.x=nx; player.y=ny;
   }
-  if (player.x === goal.x && player.y === goal.y) {
+  if (player.x===goal.x && player.y===goal.y){
     setTimeout(()=>alert("クリア！"),100);
   }
 }
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") move(0,-1);
-  if (e.key === "ArrowDown") move(0,1);
-  if (e.key === "ArrowLeft") move(-1,0);
-  if (e.key === "ArrowRight") move(1,0);
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")move(0,-1);
+  if(e.key==="ArrowDown")move(0,1);
+  if(e.key==="ArrowLeft")move(-1,0);
+  if(e.key==="ArrowRight")move(1,0);
 });
 
-function loop(){
-  draw();
-  requestAnimationFrame(loop);
-}
+function loop(){ draw(); requestAnimationFrame(loop); }
 loop();
 </script>
 </body>
