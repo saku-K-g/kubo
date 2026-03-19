@@ -89,15 +89,37 @@ function draw(){
   const tile = Math.floor(Math.min(canvas.width,canvas.height)/SIZE);
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  const radius = tile * 3;
+  // ===== 迷路 =====
+  ctx.save();
+  ctx.shadowBlur = 0;
+  for (let y=0;y<SIZE;y++){
+    for (let x=0;x<SIZE;x++){
+      ctx.fillStyle = maze[y][x] ? "#6a00ff" : "#000";
+      ctx.fillRect(x*tile,y*tile,tile,tile);
+    }
+  }
 
-  // ===== まず全体を暗く =====
-  ctx.fillStyle = "#000";
+  // ゴール
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goal.x*tile,goal.y*tile,tile,tile);
+
+  // プレイヤー
+  ctx.fillStyle="#00ffcc";
+  ctx.fillRect(player.x*tile,player.y*tile,tile,tile);
+  ctx.restore();
+
+  // ===== 視界制限（最終安定版） =====
+  ctx.save();
+
+  // 暗闇レイヤー
+  ctx.fillStyle = "rgba(0,0,0,0.92)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // ===== 見える範囲をクリップ =====
-  ctx.save();
+  // くり抜き
+  ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
+
+  const radius = tile * 3;
 
   // プレイヤー
   ctx.arc(player.x*tile + tile/2, player.y*tile + tile/2, radius, 0, Math.PI*2);
@@ -106,14 +128,10 @@ function draw(){
   ctx.moveTo(goal.x*tile + tile/2 + radius, goal.y*tile + tile/2);
   ctx.arc(goal.x*tile + tile/2, goal.y*tile + tile/2, radius, 0, Math.PI*2);
 
-  ctx.clip();
+  ctx.fill();
 
-  // ===== クリップ内だけ迷路を描画 =====
-  for (let y=0;y<SIZE;y++){
-    for (let x=0;x<SIZE;x++){
-      if (maze[y][x]){
-        ctx.fillStyle="#6a00ff";
-      } else {
+  ctx.restore();
+} else {
         ctx.fillStyle="#000";
       }
       ctx.fillRect(x*tile,y*tile,tile,tile);
